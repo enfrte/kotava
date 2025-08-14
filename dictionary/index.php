@@ -32,6 +32,17 @@
 			</div>
 		</div>
 
+		<div class="row mb-3 pt-0">
+			<div class="col-12">
+				<div class="form-check d-flex justify-content-center">
+					<input class="form-check-input" type="checkbox" id="hideLegacy" x-model="hideLegacy" @click.debounce="fetchEntries()" checked>
+					<label class="form-check-label ms-2" for="hideLegacy">
+						Hide legacy results
+					</label>
+				</div>
+			</div>
+		</div>
+
 		<div class="pt-0 pb-3 small text-center">
 			<em>Note:</em> Less than 3 characters will search for exact matches.
 		</div>
@@ -42,6 +53,7 @@
 					<th scope="col">Kotava</th>
 					<th scope="col">English</th>
 					<th scope="col">Grammar</th>
+					<th scope="col">Current status</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -50,6 +62,11 @@
 						<td x-text="entry.kotava"></td>
 						<td x-text="entry.english"></td>
 						<td x-text="entry.grammar"></td>
+						<td>
+							<span x-show="!entry.status_update || entry.status_update === ''" class="badge rounded-pill bg-success">original</span>
+							<span x-show="entry.status_update === 'legacy'" class="badge rounded-pill bg-danger">legacy</span>
+							<span x-show="entry.status_update === 'google translated'" class="badge rounded-pill bg-warning text-dark">google translated</span>
+						</td>
 					</tr>
 				</template>
 			</tbody>
@@ -62,8 +79,10 @@
 			Alpine.data('dictionary', () => ({
 				searchEnglish: '',
 				searchKotava: '',
+				lastSearched: '',
 				entries: [],
 				darkMode: true,
+				hideLegacy: true,
 				get filteredEnglish() {
 					return this.entries.filter(entry =>
 						entry.english.toLowerCase().includes(this.searchEnglish.toLowerCase())
@@ -74,7 +93,19 @@
 						entry.kotava.toLowerCase().includes(this.searchKotava.toLowerCase())
 					);
 				},
-				fetchEntries(language) {
+				fetchEntries(language = '') {
+					if (language === '' && this.lastSearched === '') {
+						return;
+					} 
+
+					if (language !== '') {
+						this.lastSearched = language;
+					}
+
+					if (language === '') {
+						language = this.lastSearched;
+					}
+
 					const params = new URLSearchParams();
 
 					if (language === 'english') {
@@ -82,6 +113,8 @@
 					} else {
 						params.append('searchKotava', this.searchKotava);
 					}
+
+					params.append('hideLegacy', this.hideLegacy);
 
 					fetch(`dictionary_endpoint.php?${params.toString()}`)
 						.then(res => res.json())

@@ -5,19 +5,23 @@ header('Content-Type: application/json');
 // Get search parameters
 $searchEnglish = isset($_GET['searchEnglish']) ? trim($_GET['searchEnglish']) : '';
 $searchKotava = isset($_GET['searchKotava']) ? trim($_GET['searchKotava']) : '';
+$hideLegacy = isset($_GET['hideLegacy']) ? filter_var($_GET['hideLegacy'], FILTER_VALIDATE_BOOLEAN) : true;
 
 if (strlen($searchEnglish) === 0 && strlen($searchKotava) === 0) {
     echo json_encode([]);
     exit;
 }
 
-// Query SQLite kotava_dictionary_production.db
 $db = new PDO('sqlite:kotava_dictionary_production.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 // Prepare SQL query
 $sql = "SELECT * FROM dictionary WHERE 1=1";
 $params = [];
+
+if ($hideLegacy) {
+    $sql .= " AND (status_update != 'legacy' OR status_update IS NULL) ";
+}
 
 // Add search conditions
 if ($searchEnglish) {
@@ -38,6 +42,8 @@ if ($searchKotava) {
         $params[':searchKotava'] = "%$searchKotava%";
     }
 }
+
+$sql .= " ORDER BY kotava, english ";
 
 // Execute query
 $stmt = $db->prepare($sql);

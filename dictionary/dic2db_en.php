@@ -3,7 +3,7 @@
 // This script converts a json dictionary file into a database format
 
 // Define the input and output files
-$inputFile = 'dict_kotava_english.json';
+$inputFile = 'dic_kotava_english.json';
 $outputFile = 'kotava_dictionary_'.date('YmdHis').'.db';
 
 // Connect to the database
@@ -26,6 +26,7 @@ foreach ($data as $entry) {
     $stmt->execute();
     $stmt->clear();
 }
+
 $db->exec('COMMIT');
 
 // Close the database connection
